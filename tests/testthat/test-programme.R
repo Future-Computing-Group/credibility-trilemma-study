@@ -108,11 +108,63 @@ test_that("the clinching rows read the clinching transcript, not the VCG rows", 
     mutate(key, arm = "G", realised = TRUE, gain = 0.4, extraction = 0.1,
            conc_w_num = 1.5, rejected = TRUE))
   res <- list(round = round, armp = NULL, armg = armg, clinch_dev = clinch_dev)
-  dr <- deviation_rounds(res, "p")
+  dr <- deviation_rounds(res, "p", theta = 0.5)
   cl <- dr[dr$mech == "clinching", ]
   expect_equal(cl$gain[cl$arm == "G"], 0.4)
   expect_equal(cl$extraction[cl$arm == "G"], 0.1)
   expect_equal(cl$conc_w_num[cl$arm == "G"], 1.5)
   expect_equal(cl$extraction[cl$arm == "P"], 0.25)
   expect_equal(cl$conc_w_num[cl$arm == "P"], 0.5)
+})
+
+test_that("prior (b)'s uniform leaves reach every block", {
+  # With every leaf uniform, prior (b) is prior (a) on the same draws.
+  d  <- small_defaults()
+  pt <- d$points[1, ]
+  d$prior_b_uniform_leaves <- rownames(fixture_env("T", "scale")$anc)
+  a  <- run_round(pt, "a", seed = 1L, t = 1L, d = d)
+  b  <- run_round(pt, "b", seed = 1L, t = 1L, d = d)
+  for (col in c("W_vcg", "W_myerson", "rev_myerson", "realised_myerson", "c3")) {
+    expect_identical(b$round[[col]], a$round[[col]], info = col)
+  }
+  strip <- function(x) x[, setdiff(names(x), "prior")]
+  expect_identical(strip(b$armg), strip(a$armg))
+  expect_identical(strip(b$armp), strip(a$armp))
+})
+
+test_that("the perturbation amplitude reaches every block that reads it", {
+  d  <- small_defaults()
+  d$thetas <- c(0.25, 1 - 1e-9)
+  rr <- run_round(d$points[1, ], "b", seed = 1L, t = 1L, d = d)
+  expect_true(all(rr$armp$theta %in% d$thetas))
+  v  <- rr$armp[rr$armp$mech == "vcg" & rr$armp$theta == 0.25, ]
+  expect_gt(nrow(v), 0)
+  l4 <- rr$ledger[rr$ledger$case == "4_perturbation" & rr$ledger$conditions == "all", ]
+  expect_equal(l4$dp, max(v$dp))
+  expect_true(rr$clinch_dev$realised[rr$clinch_dev$arm == "P"])
+})
+
+test_that("a run's recorded constants read back as the constants it ran with", {
+  d <- small_defaults()
+  d$stake  <- 0.3
+  d$thetas <- c(0.25, 1 - 1e-9)
+  expect_identical(study_config(config_rows(d, "abc")), d)
+})
+
+test_that("the table writers read the run's recorded constants", {
+  d <- small_defaults()
+  d$stake  <- 0.3
+  d$thetas <- c(0.25, 1 - 1e-9)
+  d$points <- d$points[1, ]
+  d$priors <- "b"
+  out <- tempfile("tables")
+  res <- run_programme(d, workers = 1L, out_dir = out)
+  write_tables(res, out, point = "probe")
+  sep <- paste(readLines(file.path(out, "tables", "eval-separation.tex")), collapse = "\n")
+  expect_match(sep, "lambda=0.3", fixed = TRUE)
+  nums <- read.csv(file.path(out, "numbers.csv"))
+  expect_true(any(grepl("theta = 0.25", nums$placeholder, fixed = TRUE)))
+  dev <- readLines(file.path(out, "tables", "eval-deviations.tex"))
+  vcg_p <- dev[grepl("& VCG & P &", dev, fixed = TRUE)]
+  expect_false(any(grepl("& VCG & P & 0 &", vcg_p, fixed = TRUE)))
 })

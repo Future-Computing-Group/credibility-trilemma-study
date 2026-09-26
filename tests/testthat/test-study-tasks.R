@@ -9,7 +9,7 @@ test_that("the generator's defaults are the values the study reports", {
   expect_identical(d$util_hat, 0.5)
   expect_identical(d$deadlines, c(500L, 750L, 1000L))
   expect_identical(d$lambda_l, node_lambda_l())
-  expect_identical(d$load_level, "high")
+  expect_null(d$load_level)
   expect_identical(d$prior_b_uniform_leaves, c("l1", "l3"))
   expect_identical(d$thetas, c(0.5, 1 - 1e-9))
   pts <- d$points
@@ -72,4 +72,18 @@ test_that("virtual values: closed forms, reserves, inverses, monotonicity", {
   # The squared law's virtual value in value units is (3v^2 - 1) / (2v).
   v <- 0.7
   expect_equal(prior_phi(k * v, pr[2, ]) / k, (3 * v^2 - 1) / (2 * v))
+})
+
+test_that("the companion's load level reaches nothing the study reads", {
+  # The constructor's load level sets only the companion's task-arrival rate,
+  # which the study's own generator does not use: two environments built at
+  # different levels differ in that rate and the level's own label alone.
+  for (gt in c("tree", "sp")) {
+    lo <- exp7_environment(gt, "low", 40L, NA, "node", 0.5)
+    hi <- exp7_environment(gt, "high", 40L, NA, "node", 0.5)
+    expect_false(identical(lo$load_factor, hi$load_factor))
+    lo$load_factor <- hi$load_factor <- lo$load_level <- hi$load_level <- NULL
+    expect_identical(lo, hi)
+  }
+  expect_false("load_level" %in% config_rows(study_defaults(), NA)$key)
 })
