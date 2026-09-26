@@ -1,0 +1,11 @@
+#!/bin/sh
+# Refuses a commit whose tracked files carry internal or process text.
+# Install in a clone with:  git config core.hooksPath scripts/git-hooks
+ROOT="$(git rev-parse --show-toplevel)" || exit 0
+cd "$ROOT" || exit 0
+Rscript -e 'suppressPackageStartupMessages(library(testthat)); study_root_dir <- normalizePath("."); r <- testthat::test_file("tests/testthat/test-hygiene.R", reporter = "silent"); if (any(as.data.frame(r)$failed > 0)) quit(status = 1)' >/dev/null 2>&1
+if [ "$?" -ne 0 ]; then
+  echo "commit refused: the hygiene guard found internal text in a tracked file" >&2
+  echo "  inspect: Rscript -e 'testthat::test_file(\"tests/testthat/test-hygiene.R\")'" >&2
+  exit 1
+fi

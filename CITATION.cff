@@ -1,0 +1,76 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the accompanying paper (see preferred-citation)."
+title: "Credibility study for \"Credibility Trilemma in Polymatroidal Service Markets\""
+type: software
+license: MIT
+keywords:
+  - mechanism design
+  - credible mechanisms
+  - polymatroid
+  - clinching auction
+  - service markets
+authors:
+  - family-names: Lovén
+    given-names: Lauri
+    affiliation: "Future Computing Group, University of Oulu, Finland"
+    orcid: "https://orcid.org/0000-0001-9475-4839"
+  - family-names: Gujar
+    given-names: Sujit
+  - family-names: Timperi
+    given-names: Kalle
+  - family-names: Mehmood
+    given-names: Hassan
+  - family-names: Donta
+    given-names: "Praveen Kumar"
+  - family-names: Tarkoma
+    given-names: Sasu
+  - family-names: Dustdar
+    given-names: Schahram
+preferred-citation:
+  type: article
+  title: "Credibility Trilemma in Polymatroidal Service Markets"
+  year: 2026
+  notes: "arXiv preprint"
+  url: "https://arxiv.org/abs/2605.26604"
+  identifiers:
+    - type: other
+      value: "arXiv:2605.26604"
+  authors:
+    - family-names: Lovén
+      given-names: Lauri
+    - family-names: Gujar
+      given-names: Sujit
+    - family-names: Timperi
+      given-names: Kalle
+    - family-names: Mehmood
+      given-names: Hassan
+    - family-names: Donta
+      given-names: "Praveen Kumar"
+    - family-names: Tarkoma
+      given-names: Sasu
+    - family-names: Dustdar
+      given-names: Schahram
+references:
+  - type: software
+    title: "Simulation code for \"Agentic Service Markets Across the Computing Continuum: A Polymatroidal Architecture\""
+    version: v2.1.0
+    doi: 10.5281/zenodo.22876728
+    notes: "Version DOI of the platform release this study pins as a git submodule; to be published."
+    repository-code: "https://github.com/Future-Computing-Group/agentic-economy-sim"
+    authors:
+      - family-names: Lovén
+        given-names: Lauri
+      - family-names: Saleh
+        given-names: Alaa
+      - family-names: Farahani
+        given-names: Reza
+      - family-names: Murturi
+        given-names: Ilir
+      - family-names: Gujar
+        given-names: Sujit
+      - family-names: "Bordallo López"
+        given-names: Miguel
+      - family-names: Donta
+        given-names: "Praveen Kumar"
+      - family-names: Dustdar
+        given-names: Schahram

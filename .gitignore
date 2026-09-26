@@ -1,0 +1,16 @@
+# R session artifacts
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+Rplots.pdf
+
+# Computed outputs (regenerate with make compute / make tables)
+results/
+
+# macOS
+.DS_Store
+
+# Local assistant configuration
+.claude/
+CLAUDE.md
