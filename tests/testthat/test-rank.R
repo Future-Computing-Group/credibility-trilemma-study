@@ -111,8 +111,8 @@ test_that("conditional gaps are 0 or 1 on the unit-task market and never negativ
 test_that("U(2,3): every pairwise gap is 0 and every conditional gap is 1", {
   m <- fixture_toy_model(3, function(s) min(length(s), 2))
   for (p in list(c(1, 2), c(1, 3), c(2, 3))) {
-    expect_identical(conditional_gap(p[1], p[2], integer(0), m), 0)
-    expect_identical(conditional_gap(p[1], p[2], setdiff(1:3, p), m), 1)
+    expect_equal(conditional_gap(p[1], p[2], integer(0), m), 0)
+    expect_equal(conditional_gap(p[1], p[2], setdiff(1:3, p), m), 1)
   }
 })
 

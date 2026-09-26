@@ -18,7 +18,7 @@ fixture_toy_model <- function(n, rank_of) {
   tab <- list()
   for (m in 0:(2^n - 1)) {
     s <- which(bitwAnd(m, bitwShiftL(1L, seq_len(n) - 1L)) > 0)
-    tab[[paste(s, collapse = ",")]] <- rank_of(s)
+    tab[[paste0("s", paste(s, collapse = ","))]] <- rank_of(s)
   }
-  toy_model(n, function(cnt) tab[[paste(which(cnt > 0), collapse = ",")]])
+  toy_model(n, function(cnt) tab[[paste0("s", paste(which(cnt > 0), collapse = ","))]])
 }
