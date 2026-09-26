@@ -168,3 +168,24 @@ test_that("the table writers read the run's recorded constants", {
   vcg_p <- dev[grepl("& VCG & P &", dev, fixed = TRUE)]
   expect_false(any(grepl("& VCG & P & 0 &", vcg_p, fixed = TRUE)))
 })
+
+test_that("the contention point halves the capacity at the load point's agent counts", {
+  d   <- study_defaults()
+  pts <- d$points
+  ct  <- pts[pts$point == "contention", ]
+  expect_identical(ct$graph_type, c("tree", "sp"))
+  expect_identical(ct$N, pts$N[pts$point == "load" & pts$graph_type != "entangled"])
+  expect_identical(ct$cap_scale, c(0.5, 0.5))
+  # The point's agent count and capacity reach the round, the region, every
+  # arm, the transcript and the ledger.
+  for (k in seq_len(nrow(ct))) {
+    rr <- run_round(ct[k, ], "b", seed = 1L, t = 1L, d = d)
+    expect_true(rr$round$cert)
+    expect_identical(rr$round$N, ct$N[k])
+    expect_identical(rr$round$f_E, c(50, 25)[k])
+    for (blk in c("armp", "armg", "verify", "clinch_dev", "ledger")) {
+      expect_identical(unique(rr[[blk]]$point), "contention", info = blk)
+      expect_identical(unique(rr[[blk]]$cap_scale), 0.5, info = blk)
+    }
+  }
+})
