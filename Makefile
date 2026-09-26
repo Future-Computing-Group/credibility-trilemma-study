@@ -7,9 +7,14 @@ R ?= Rscript
 
 test: test-p1 test-study
 
-# The companion's own suite, at the submodule's tree, with failures propagated.
+# The companion's own suite, at the submodule's commit, with failures
+# propagated. It runs in a scratch clone of that commit: inside a submodule
+# `.git` is a file holding a relative gitdir, which one of the companion's
+# tests reads from its own working directory and cannot resolve.
 test-p1:
-	cd p1 && $(R) -e 'suppressPackageStartupMessages(library(testthat)); testthat::test_dir("tests/testthat", reporter = "summary", stop_on_failure = TRUE)'
+	tmp=$$(mktemp -d) && git clone -q p1 "$$tmp/p1" && \
+	git -C "$$tmp/p1" checkout -q $$(git -C p1 rev-parse HEAD) && \
+	cd "$$tmp/p1" && $(R) -e 'suppressPackageStartupMessages(library(testthat)); testthat::test_dir("tests/testthat", reporter = "summary", stop_on_failure = TRUE)'
 
 test-study:
 	$(R) tests/testthat.R
