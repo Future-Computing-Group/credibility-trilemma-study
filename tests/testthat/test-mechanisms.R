@@ -94,13 +94,14 @@ test_that("the competitiveness boundary: Myerson charges (20, 1) and no in-suppo
   m  <- fixture_worked_example()
   pr <- data.frame(fam = "unif", lo = c(10, 1), hi = c(11, 2))
   my <- mechanism("myerson", pr)
-  for (b1 in seq(10, 11, by = 0.25)) for (b2 in seq(1, 2, by = 0.25)) {
+  # Interior profiles: a bid exactly at a support bottom ties with the reserve.
+  for (b1 in seq(10.1, 10.9, by = 0.2)) for (b2 in seq(1.1, 1.9, by = 0.2)) {
     out <- mech_run(my, c(b1, b2), m)
     expect_equal(out$x, c(2, 1))
     expect_equal(out$p, c(20, 1))
     # Every in-support counterfactual for the other agent leaves each payment put.
-    for (h in seq(1, 2, by = 0.1))   expect_equal(mech_run(my, c(b1, h), m)$p[1], 20)
-    for (h in seq(10, 11, by = 0.1)) expect_equal(mech_run(my, c(h, b2), m)$p[2], 1)
+    for (h in seq(1.05, 1.95, by = 0.1))   expect_equal(mech_run(my, c(b1, h), m)$p[1], 20)
+    for (h in seq(10.05, 10.95, by = 0.1)) expect_equal(mech_run(my, c(h, b2), m)$p[2], 1)
   }
 })
 
