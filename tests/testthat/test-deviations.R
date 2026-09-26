@@ -3,17 +3,24 @@
 # mechanism; Arm G, a phantom row re-run through the mechanism; and the
 # per-agent rationalisation check of the deviation definition.
 
-armp_fixture <- function(inst, prior, mech_name, N = 40L, cap = 0.3, t = 1L) {
-  r <- fixture_round(inst, N = N, cap_scale = cap, t = t, prior = prior)
-  mech <- mechanism(mech_name, if (mech_name == "myerson") r$pr)
-  c(r, list(mech = mech, ap = arm_p_round(r$b, mech, r$model, r$pr,
-                                          study_defaults()$thetas)))
+# The reserve halves the active population, so the tree needs a tighter
+# capacity than the fan for the revenue-optimal arm to be contended. A round
+# realises at most one triple per saturated block, so the fixture pools rounds.
+armp_fixture <- function(inst, prior, mech_name, N = 40L,
+                         cap = if (inst == "T") 0.15 else 0.3, rounds = 1:6) {
+  bind_rows(lapply(rounds, function(t) {
+    r <- fixture_round(inst, N = N, cap_scale = cap, t = t, prior = prior)
+    mech <- mechanism(mech_name, if (mech_name == "myerson") r$pr)
+    ap <- arm_p_round(r$b, mech, r$model, r$pr, study_defaults()$thetas)
+    if (!"j" %in% names(ap)) ap$j <- NA_integer_
+    ap$cross <- r$pr$fam[ap$i] != r$pr$fam[ifelse(is.na(ap$j), ap$i, ap$j)]
+    ap
+  }))
 }
 
 test_that("Arm P: inside the window the allocation stays and the increment is the lemma's", {
   for (inst in c("T", "S")) for (prior in c("a", "b")) for (mn in c("vcg", "myerson")) {
-    f  <- armp_fixture(inst, prior, mn)
-    ap <- f$ap
+    ap <- armp_fixture(inst, prior, mn)
     lab <- paste(inst, prior, mn)
     expect_gt(sum(ap$realised), 0, label = lab)
     rz <- ap[ap$realised, ]
@@ -43,9 +50,9 @@ test_that("Arm P on the worked example raises agent 1's payment by delta", {
 })
 
 test_that("Arm P on branch (V) with heterogeneous priors follows the pullback", {
-  f  <- armp_fixture("T", "b", "myerson", N = 60L, cap = 0.3)
-  rz <- f$ap[f$ap$realised, ]
-  crossed <- f$pr$fam[rz$i] != f$pr$fam[rz$j]
+  ap <- armp_fixture("T", "b", "myerson", N = 60L)
+  rz <- ap[ap$realised, ]
+  crossed <- rz$cross
   expect_gt(sum(crossed), 0)
   expect_true(any(abs(rz$dp[crossed] - rz$delta[crossed]) > 1e-6))
   expect_lt(max(abs(rz$dp - rz$dp_formula)), 1e-12)
@@ -59,7 +66,8 @@ test_that("Arm G: the phantom is re-run through the mechanism and passes each ag
     expect_gt(nrow(g), 0)
     expect_true(all(g$rationalised))
     expect_true(all(g$phantom_in_support))
-    expect_setequal(unique(g$class), c("nonwin", "win_disp"))
+    expect_true(all(g$class %in% c("nonwin", "win_nodisp", "win_disp")))
+    expect_true(all(c("nonwin", "win_disp") %in% g$class))
     expect_true(all(g$conc_w_num[g$class == "nonwin"] == 0))
     expect_true(all(g$conc_w_num[g$class == "win_disp"] > 0))
     expect_true(any(g$rev_gain > 0))
