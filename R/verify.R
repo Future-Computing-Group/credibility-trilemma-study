@@ -75,17 +75,25 @@ verify_transcript <- function(tr, bids, model, roster_check = TRUE) {
 #' roster, signed with its own key; `forged` extends a rostered agent's demand
 #' past its exit with messages the operator signs. Each mutated transcript is
 #' produced by the clinching engine under the operator's announcements, so it
-#' is consistent everywhere else; the revenue it would carry is read off it.
+#' is consistent everywhere else; the revenue it would carry, its extraction
+#' (the payment increment of the genuine agents it still allocates) and its
+#' welfare loss (the value of the genuine units it takes away) are read off it.
 #'
 #' @param phantom list(type, exit) or NULL.
 #' @param forged  list(j, delta) or NULL.
-#' @return Named list of list(realised, revenue, tr).
+#' @return Named list of list(realised, revenue, extraction, conc_w_num, tr).
 clinch_mutations <- function(b, model, phantom = NULL, forged = NULL) {
   honest <- clinch_run(b, model)
   rev0   <- sum(honest$pay)
-  wrap   <- function(tr) list(realised = TRUE, revenue = sum(tr$pay) - rev0, tr = tr)
-  none   <- list(realised = FALSE, revenue = NA_real_, tr = NULL)
-  out    <- list(honest = list(realised = TRUE, revenue = 0, tr = honest))
+  wrap   <- function(tr) {
+    stay <- tr$x > 0
+    list(realised = TRUE, revenue = sum(tr$pay) - rev0,
+         extraction = sum(tr$pay[stay] - honest$pay[stay]),
+         conc_w_num = sum(b * honest$x) - sum(b * tr$x), tr = tr)
+  }
+  none   <- list(realised = FALSE, revenue = NA_real_, extraction = NA_real_,
+                 conc_w_num = NA_real_, tr = NULL)
+  out    <- list(honest = wrap(honest))
 
   ps <- vapply(honest$events, `[[`, numeric(1), "p")
   target <- NULL

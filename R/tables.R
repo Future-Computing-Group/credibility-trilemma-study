@@ -73,14 +73,14 @@ deviation_rounds <- function(res, point) {
       right_join(rd[, keys], by = keys)
   }
   cd <- res$clinch_dev[res$clinch_dev$point == point, ]
-  cl <- function(a, like) {
+  cl <- function(a) {
     x <- cd[cd$arm == a, ] %>% transmute(graph_type, prior, seed, t,
-                                         gain_c = ifelse(realised, gain, 0),
+                                         gain = ifelse(realised, gain, 0),
+                                         extraction = ifelse(realised, extraction, 0),
+                                         conc_w_num = ifelse(realised, conc_w_num, 0),
                                          pass = ifelse(realised, as.numeric(!rejected), NA),
                                          n_pass = as.integer(realised))
-    like %>% select(all_of(keys), extraction, conc_w_num) %>% left_join(x, by = keys) %>%
-      mutate(gain = gain_c, extraction = if (a == "P") gain_c else extraction) %>%
-      select(-gain_c)
+    rd[, keys] %>% left_join(x, by = keys)
   }
   W <- rd %>% transmute(graph_type, prior, seed, t, vcg = W_vcg, myerson = W_myerson,
                         fp = W_fp, clinching = W_vcg)
@@ -88,9 +88,9 @@ deviation_rounds <- function(res, point) {
   gv <- best_g("vcg")
   out <- list(
     tibble(mech = "vcg", arm = "P", pv), tibble(mech = "myerson", arm = "P", sum_p("myerson")),
-    tibble(mech = "clinching", arm = "P", cl("P", pv)), tibble(mech = "fp", arm = "P", sum_p("fp")),
+    tibble(mech = "clinching", arm = "P", cl("P")), tibble(mech = "fp", arm = "P", sum_p("fp")),
     tibble(mech = "vcg", arm = "G", gv), tibble(mech = "myerson", arm = "G", best_g("myerson")),
-    tibble(mech = "clinching", arm = "G", cl("G", gv)), tibble(mech = "fp", arm = "G", best_g("fp")))
+    tibble(mech = "clinching", arm = "G", cl("G")), tibble(mech = "fp", arm = "G", best_g("fp")))
   bind_rows(out) %>%
     left_join(tidyr::pivot_longer(W, c(vcg, myerson, fp, clinching),
                                   names_to = "mech", values_to = "W"),
@@ -291,8 +291,8 @@ evaluation_numbers <- function(res, point, d, ds) {
   ke <- lg[lg$case == "4_perturbation" & lg$conditions == "no_C1", ]
   add("knife-edge: max |gain - lambda dp|", "", if (nrow(ke)) fmt(max(abs(ke$delta - d$stake * ke$dp))) else "---",
       "ledger_round")
-  add("identities at every certified round: certificate, greedy exact, VCG = companion, clinching = VCG, augmented VCG = companion",
+  add("identities at every certified round: certificate, greedy exact, VCG = companion, clinching = VCG, augmented VCG = companion, clinching on the mutated logs = VCG",
       "", paste(all(rc$cert), all(rc$greedy_exact), all(rc$vcg_eq_p1), all(rc$clinch_eq_vcg),
-                all(rc$vcg_aug_eq_p1), sep = "/"), "run_round")
+                all(rc$vcg_aug_eq_p1), all(rc$clinch_mut_eq_vcg), sep = "/"), "run_round")
   bind_rows(num)
 }

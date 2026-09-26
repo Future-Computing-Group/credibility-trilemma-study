@@ -90,6 +90,15 @@ run_round <- function(pt, prior, seed, t, d) {
   muts <- clinch_mutations(b, model,
                            phantom = list(type = gb$leaf, exit = gb$bid_ph),
                            forged  = if (!is.null(sel)) list(j = sel$j, delta = sel$delta))
+  # Clinching on the phantom's log is VCG on the augmented profile, and on the
+  # forged log VCG at the perturbed bid, allocation and every payment.
+  same <- function(tr, run) identical(unname(tr$x_all), run$x) &&
+    max(abs(unname(tr$pay_all) - run$p)) <= 1e-9 * max(1, abs(run$p))
+  clinch_mut_eq_vcg <- same(muts$phantom$tr, run_aug) && (is.null(sel) || {
+    bh <- b
+    bh[sel$j] <- b[sel$j] + sel$delta
+    same(muts$forged$tr, mech_run(mechs$vcg, bh, model))
+  })
   verify <- bind_rows(lapply(names(muts), function(m) {
     mu <- muts[[m]]
     v  <- if (mu$realised) verify_transcript(mu$tr, b, model) else NULL
@@ -107,6 +116,8 @@ run_round <- function(pt, prior, seed, t, d) {
     arm = c("P", "G"),
     realised = c(muts$forged$realised, muts$phantom$realised),
     gain = c(muts$forged$revenue, muts$phantom$revenue),
+    extraction = c(muts$forged$extraction, muts$phantom$extraction),
+    conc_w_num = c(muts$forged$conc_w_num, muts$phantom$conc_w_num),
     rejected = c(verify$rejected_any[verify$mutation == "forged"],
                  verify$rejected_any[verify$mutation == "phantom"]))
 
@@ -128,6 +139,7 @@ run_round <- function(pt, prior, seed, t, d) {
     n_active = sum(b > 0), rank_E = rank_E, c3 = led$c3[1],
     zero_gap_share = task_pair_zero_gap_share(model),
     vcg_eq_p1 = vcg_eq_p1, clinch_eq_vcg = clinch_eq_vcg, vcg_aug_eq_p1 = vcg_aug_eq_p1,
+    clinch_mut_eq_vcg = clinch_mut_eq_vcg,
     W_vcg = sum(b * honest$vcg$x), W_myerson = sum(b * honest$myerson$x),
     W_fp = sum(b * honest$fp$x),
     rev_vcg = sum(honest$vcg$p), rev_myerson = sum(honest$myerson$p),
