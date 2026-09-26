@@ -67,6 +67,22 @@ rationalises <- function(i, x_obs, p_obs, witness, b_i, mech, model, pr,
   isTRUE(run$x[i] == x_obs) && abs(run$p_i - p_obs) <= tol * max(1, abs(p_obs))
 }
 
+#' The same check for every genuine agent against one witness profile.
+#'
+#' One run of the prescribed mechanism on the witness gives every agent's
+#' outcome under it; agent i is rationalised when the witness keeps its bid,
+#' every other entry lies in its support, and the run returns its observation.
+rationalises_all <- function(x_obs, p_obs, witness, b, mech, model, pr,
+                             tol = 1e-9) {
+  n   <- length(b)
+  out <- !(witness >= pr$lo & witness <= pr$hi)
+  run <- mech_run(mech, witness, model)
+  vapply(seq_len(n), function(i) {
+    witness[i] == b[i] && !any(out[-i]) && run$x[i] == x_obs[i] &&
+      abs(run$p[i] - p_obs[i]) <= tol * max(1, abs(p_obs[i]))
+  }, logical(1))
+}
+
 #' Arm P for agent i: raise j's bid inside the window and re-run the mechanism.
 #'
 #' The operator reports the true allocation and the payment the re-run
@@ -164,9 +180,7 @@ arm_g_eval <- function(b, mech, model, pr, leaf_type, pr_ph, bid_ph, base) {
   pg  <- run$p[seq_len(n)]
   stay <- xg > 0
   displaced <- base$x > 0 & !stay
-  ok <- vapply(seq_len(n), function(i)
-    rationalises(i, xg[i], pg[i], c(b, bid_ph), b[i], mech_aug, aug$model,
-                 aug$pr), logical(1))
+  ok <- rationalises_all(xg, pg, c(b, bid_ph), b, mech_aug, aug$model, aug$pr)
   tibble(leaf = leaf_type, bid_ph = bid_ph, x_ph = run$x[n + 1],
          class = if (run$x[n + 1] == 0) "nonwin" else
                    if (any(displaced)) "win_disp" else "win_nodisp",
