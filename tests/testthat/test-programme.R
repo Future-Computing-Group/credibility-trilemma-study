@@ -21,6 +21,9 @@ test_that("one round end to end: the identities hold and every block is filled",
   expect_true(rr$round$vcg_eq_p1)
   expect_true(rr$round$clinch_eq_vcg)
   expect_true(rr$round$vcg_aug_eq_p1)
+  # Clinching on the phantom's and the forged message logs is VCG on the
+  # augmented and the perturbed profiles, allocation and payments.
+  expect_true(rr$round$clinch_mut_eq_vcg)
   expect_setequal(unique(rr$armp$mech), c("vcg", "myerson", "fp"))
   expect_setequal(unique(rr$armg$mech), c("vcg", "myerson", "fp"))
   expect_setequal(rr$verify$mutation, c("honest", names(mutation_verifier), "phantom_roster_off"))
