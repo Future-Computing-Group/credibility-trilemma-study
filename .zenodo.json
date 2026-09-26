@@ -1,0 +1,60 @@
+{
+  "upload_type": "software",
+  "title": "Credibility study for \"Credibility Trilemma in Polymatroidal Service Markets\"",
+  "version": "v1.0.0",
+  "description": "R code reproducing the evaluation of the arXiv preprint arXiv:2605.26604, \"Credibility Trilemma in Polymatroidal Service Markets\". On the certified node-level instances of the companion platform (a rooted tree and a laminar parallel fan, with a crossing instance as the boundary case), it computes exactly the conditional non-modularity gaps, the operator's payment-perturbation deviation inside its contested window and a phantom-bid deviation, each re-run through the mechanism (VCG, Myerson with reserve, pay-as-bid, and ascending clinching), the constant of the cost-of-non-credibility bound, broadcast verification of clinching transcripts against one mutation per proof case, and an operator payoff ledger for settlement separation with each side condition removed in turn, at three operating points. The companion simulation platform is included as a git submodule pinned to its release. Reproduce all results with make reproduce.",
+  "license": "MIT",
+  "access_right": "open",
+  "creators": [
+    {
+      "name": "Lovén, Lauri",
+      "affiliation": "Future Computing Group, University of Oulu, Finland",
+      "orcid": "0000-0001-9475-4839"
+    },
+    {
+      "name": "Gujar, Sujit",
+      "affiliation": "Machine Learning Lab, International Institute of Information Technology, Hyderabad, India"
+    },
+    {
+      "name": "Timperi, Kalle",
+      "affiliation": "Perception Engineering, University of Oulu, Finland"
+    },
+    {
+      "name": "Mehmood, Hassan",
+      "affiliation": "Future Computing Group, University of Oulu, Finland"
+    },
+    {
+      "name": "Donta, Praveen Kumar",
+      "affiliation": "Department of Computer and Systems Sciences, Stockholm University, Sweden"
+    },
+    {
+      "name": "Tarkoma, Sasu",
+      "affiliation": "Department of Computer Science, University of Helsinki, Finland"
+    },
+    {
+      "name": "Dustdar, Schahram",
+      "affiliation": "Distributed Systems Group, TU Wien, Austria; ICREA, Barcelona, Spain"
+    }
+  ],
+  "keywords": [
+    "mechanism design",
+    "credible mechanisms",
+    "polymatroid",
+    "clinching auction",
+    "cost of non-credibility",
+    "service markets",
+    "computing continuum"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "arXiv:2605.26604",
+      "relation": "isSupplementTo",
+      "scheme": "arxiv"
+    },
+    {
+      "identifier": "10.5281/zenodo.22876728",
+      "relation": "references",
+      "scheme": "doi"
+    }
+  ]
+}
