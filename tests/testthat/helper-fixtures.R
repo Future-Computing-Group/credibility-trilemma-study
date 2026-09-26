@@ -22,3 +22,21 @@ fixture_toy_model <- function(n, rank_of) {
   }
   toy_model(n, function(cnt) tab[[paste0("s", paste(which(cnt > 0), collapse = ","))]])
 }
+
+#' A study round on an instance: tasks, bids, priors and the market model.
+fixture_round <- function(inst = "T", size = "scale", N = 40L, cap_scale = 0.3,
+                          t = 1L, seed = 1L, prior = "a") {
+  env   <- fixture_env(inst, size, N, cap_scale)
+  tasks <- study_round_tasks(env, N, t, seed, prior)
+  env   <- exp7_certify(env, tasks, "node")
+  k     <- study_bid_scale(env)
+  list(env = env, tasks = tasks, b = study_bids(tasks, env), k = k,
+       pr = study_prior_table(tasks$recipe, prior, k),
+       model = market_model(tasks, env))
+}
+
+#' The worked example of the payment perturbation lemma:
+#' f({1}) = f({2}) = 2, f({1,2}) = 3.
+fixture_worked_example <- function() {
+  fixture_toy_model(2, function(s) c(0, 2, 2, 3)[1 + length(s) + (length(s) == 2)])
+}
