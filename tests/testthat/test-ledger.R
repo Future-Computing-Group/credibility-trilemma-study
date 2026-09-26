@@ -4,14 +4,15 @@
 ledger_fixture <- function(inst = "T", t = 1L) {
   r <- fixture_round(inst, N = 40L, cap_scale = 0.3, t = t, prior = "a")
   d <- study_defaults()
-  list(r = r, led = ledger_round(r$b, r$model, r$pr, "a", r$k, d$fee, d$stake))
+  list(r = r, led = ledger_round(r$b, r$model, r$pr, "a", r$k, d))
 }
 
 test_that("(C3) is checked on the round, not assumed", {
   f <- ledger_fixture()
   expect_true(f$led$c3[1])
   big <- fixture_round("S", N = 40L, cap_scale = 1)       # 40 tasks, 50 units
-  expect_false(ledger_round(big$b, big$model, big$pr, "a", big$k, 0.01, 0.1)$c3[1])
+  expect_false(ledger_round(big$b, big$model, big$pr, "a", big$k,
+                            study_defaults())$c3[1])
 })
 
 test_that("(C3) is read against the region's rank over the whole ground set", {
@@ -23,7 +24,7 @@ test_that("(C3) is read against the region's rank over the whole ground set", {
   expect_gt(sum(r$b > 0), rk)
   expect_lt(rk, 100)
   d  <- study_defaults()
-  expect_false(ledger_round(r$b, r$model, r$pr, "a", r$k, d$fee, d$stake)$c3[1])
+  expect_false(ledger_round(r$b, r$model, r$pr, "a", r$k, d)$c3[1])
   expect_identical(ground_rank(r$model), 100)
 })
 

@@ -200,11 +200,11 @@ arm_g_eval <- function(b, mech, model, pr, leaf_type, pr_ph, bid_ph, base) {
 #' just above that winner's key (displacing it) and just below it (winning
 #' nothing and raising the winners' thresholds). The best over this set is a
 #' lower bound on the best phantom.
-arm_g_round <- function(b, mech, model, pr, prior, k, eps = 1e-9) {
+arm_g_round <- function(b, mech, model, pr, prior, k, uniform_leaves, eps = 1e-9) {
   base <- mech_run(mech, b, model)
   L <- if (is.null(model$env)) seq_len(model$n_types) else rownames(model$env$anc)
   bind_rows(lapply(seq_along(L), function(l) {
-    pr_ph <- study_prior_table(L[l], prior, k)
+    pr_ph <- study_prior_table(L[l], prior, k, uniform_leaves)
     top   <- arm_g_eval(b, mech, model, pr, l, pr_ph, pr_ph$hi, base)
     cands <- top
     if (top$n_displaced > 0) {

@@ -27,11 +27,12 @@ fixture_toy_model <- function(n, rank_of) {
 fixture_round <- function(inst = "T", size = "scale", N = 40L, cap_scale = 0.3,
                           t = 1L, seed = 1L, prior = "a") {
   env   <- fixture_env(inst, size, N, cap_scale)
-  tasks <- study_round_tasks(env, N, t, seed, prior)
+  tasks <- study_round_tasks(env, N, t, seed, prior,
+                             uniform_leaves = study_defaults()$prior_b_uniform_leaves)
   env   <- exp7_certify(env, tasks, "node")
   k     <- study_bid_scale(env)
   list(env = env, tasks = tasks, b = study_bids(tasks, env), k = k,
-       pr = study_prior_table(tasks$recipe, prior, k),
+       pr = study_prior_table(tasks$recipe, prior, k, study_defaults()$prior_b_uniform_leaves),
        model = market_model(tasks, env))
 }
 

@@ -62,7 +62,8 @@ test_that("Arm G: the phantom is re-run through the mechanism and passes each ag
   for (mn in c("vcg", "myerson")) {
     r  <- fixture_round("T", N = 40L, cap_scale = 0.3, prior = "b")
     mech <- mechanism(mn, if (mn == "myerson") r$pr)
-    g  <- arm_g_round(r$b, mech, r$model, r$pr, prior = "b", k = r$k)
+    g  <- arm_g_round(r$b, mech, r$model, r$pr, prior = "b", k = r$k,
+                       uniform_leaves = study_defaults()$prior_b_uniform_leaves)
     expect_gt(nrow(g), 0)
     expect_true(all(g$rationalised))
     expect_true(all(g$phantom_in_support))

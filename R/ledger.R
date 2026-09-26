@@ -43,9 +43,12 @@ operator_payoff <- function(units_gen, gross_gen, units_ph, gross_ph, cond,
 #'
 #' @return Tibble: case, conditions, realised, delta (payoff change), and the
 #'   case's inputs (dp, p_ph, units_ph), rejected, c3.
-ledger_round <- function(b, model, pr, prior, k, fee, stake,
-                         ap = arm_p_round(b, mechanism("vcg"), model, pr, 0.5),
-                         g = arm_g_round(b, mechanism("vcg"), model, pr, prior, k)) {
+ledger_round <- function(b, model, pr, prior, k, d,
+                         ap = arm_p_round(b, mechanism("vcg"), model, pr, d$thetas[1]),
+                         g = arm_g_round(b, mechanism("vcg"), model, pr, prior, k,
+                                         d$prior_b_uniform_leaves)) {
+  fee   <- d$fee
+  stake <- d$stake
   vcg  <- mechanism("vcg")
   base <- mech_run(vcg, b, model)
   n    <- length(b)
@@ -75,7 +78,7 @@ ledger_round <- function(b, model, pr, prior, k, fee, stake,
   }
   rejected_3 <- if (is.na(top_l)) NA else
     set_rank(model, c(win, top_l)) < length(win) + 1
-  rz <- if ("dp" %in% names(ap)) ap[ap$realised & ap$theta == 0.5, ] else ap[0, ]
+  rz <- if ("dp" %in% names(ap)) ap[ap$realised & ap$theta == d$thetas[1], ] else ap[0, ]
   dp_sel <- if (nrow(rz)) max(rz$dp) else NA
   cases[["4_perturbation"]] <- if (is.na(dp_sel)) NULL else outcome(u0, g0 + dp_sel)
   best <- function(cls) {

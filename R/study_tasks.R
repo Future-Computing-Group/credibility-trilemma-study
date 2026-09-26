@@ -7,12 +7,12 @@
 #' Every constant a computation block reads, in one place.
 #'
 #' `rounds` and `seeds` are the companion's joint-misreport block (30 rounds,
-#' ten seeds); `util_hat`, `deadlines`, `lambda_l` and `load_level` are the
-#' bid-model settings that block runs at. The operating points: `population`
-#' keeps the companion's agent counts (90 on the tree, 45 on the fan), which
-#' with one task per agent offers two thirds of the companion's task volume;
-#' `load` keeps the companion's offered load instead (1.5 tasks per agent at
-#' its high load level, hence 135 and 68 single-task agents), and carries the
+#' ten seeds); `util_hat`, `deadlines` and `lambda_l` are the bid-model
+#' settings that block runs at. The operating points: `population` keeps the
+#' companion's agent counts (90 on the tree, 45 on the fan), which with one
+#' task per agent offers two thirds of the companion's task volume; `load`
+#' keeps the companion's offered load instead (its agents carry 1.5 tasks per
+#' round at its high load level, hence 135 and 68 single-task agents), and carries the
 #' crossing instance at the companion's enumerable point as a boundary row.
 #' `fee` is the operator's per-unit fee and `stake` the ownership share of the
 #' gross payments used when the no-stake condition is removed, both in bid
@@ -24,7 +24,6 @@ study_defaults <- function() {
     util_hat   = 0.5,
     deadlines  = c(500L, 750L, 1000L),
     lambda_l   = node_lambda_l(),
-    load_level = "high",
     priors     = c("a", "b"),
     prior_b_uniform_leaves = c("l1", "l3"),
     thetas     = c(0.5, 1 - 1e-9),
@@ -56,16 +55,18 @@ study_defaults <- function() {
 #' @param seed  Seed of the run.
 #' @param prior "a" or "b".
 #' @param deadlines Deadlines a task draws from (ms).
+#' @param uniform_leaves Leaves carrying U(0, 1) under prior (b).
 #' @return Tibble of task_id, agent_id, deadline, value_base, recipe.
 study_round_tasks <- function(env, N, t, seed, prior = c("a", "b"),
-                              deadlines = study_defaults()$deadlines) {
+                              deadlines = study_defaults()$deadlines,
+                              uniform_leaves) {
   prior <- match.arg(prior)
   set.seed(seed * 1009L + t)
   recipe   <- sample(names(env$leaf_shares), N, replace = TRUE,
                      prob = env$leaf_shares)
   deadline <- sample(deadlines, N, replace = TRUE)
   u        <- runif(N)
-  sq       <- study_prior_table(recipe, prior, 1)$fam == "sq"
+  sq       <- study_prior_table(recipe, prior, 1, uniform_leaves)$fam == "sq"
   tibble(task_id    = paste0("a", seq_len(N), "_t", t, "_1"),
          agent_id   = seq_len(N),
          deadline   = deadline,
@@ -100,8 +101,9 @@ study_bids <- function(tasks, env, d = study_defaults()) {
 #' @param leaves Leaf of each agent's task.
 #' @param prior  "a", "b", or "id" (a reserve-free common key, tests only).
 #' @param k      Bid multiplier: the support is (0, k).
-study_prior_table <- function(leaves, prior, k,
-                              uniform_leaves = study_defaults()$prior_b_uniform_leaves) {
+#' @param uniform_leaves Leaves carrying U(0, 1) under prior (b); read only
+#'   under prior (b).
+study_prior_table <- function(leaves, prior, k, uniform_leaves) {
   fam <- switch(prior,
                 a  = rep("unif", length(leaves)),
                 b  = ifelse(leaves %in% uniform_leaves, "unif", "sq"),

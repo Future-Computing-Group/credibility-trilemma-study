@@ -6,7 +6,8 @@ verify_fixture <- function(inst, prior, t) {
   r    <- fixture_round(inst, N = 40L, cap_scale = 0.3, t = t, prior = prior)
   vcg  <- mechanism("vcg")
   ap   <- arm_p_round(r$b, vcg, r$model, r$pr, 0.5)
-  g    <- arm_g_round(r$b, vcg, r$model, r$pr, prior, r$k)
+  g    <- arm_g_round(r$b, vcg, r$model, r$pr, prior, r$k,
+                      study_defaults()$prior_b_uniform_leaves)
   sel  <- if (any(ap$realised)) ap[ap$realised, ][which.max(ap$dp[ap$realised]), ] else NULL
   best <- g[which.max(g$rev_gain), ]
   list(r = r, sel = sel,

@@ -39,7 +39,7 @@ test_that("one task per agent, in the companion's tibble shape, seeded per round
 test_that("prior (b) transforms the same uniforms on its squared-law leaves", {
   env <- fixture_env("S", "scale", N = 40L)
   a <- study_round_tasks(env, 40L, 1L, 1L, "a")
-  b <- study_round_tasks(env, 40L, 1L, 1L, "b")
+  b <- study_round_tasks(env, 40L, 1L, 1L, "b", uniform_leaves = study_defaults()$prior_b_uniform_leaves)
   expect_identical(a$recipe, b$recipe)
   sq <- !(b$recipe %in% study_defaults()$prior_b_uniform_leaves)
   expect_true(any(sq) && any(!sq))
@@ -58,7 +58,7 @@ test_that("bids are the companion's value model, linear in the drawn value", {
 
 test_that("virtual values: closed forms, reserves, inverses, monotonicity", {
   k  <- 0.2
-  pr <- study_prior_table(c("l1", "l2"), "b", k)   # l1 uniform, l2 squared law
+  pr <- study_prior_table(c("l1", "l2"), "b", k, c("l1", "l3"))   # l1 uniform, l2 squared law
   expect_identical(pr$fam, c("unif", "sq"))
   expect_equal(prior_phi(c(k / 2, k / sqrt(3)), pr), c(0, 0))
   expect_equal(prior_phi(c(k, k), pr), c(k, k))

@@ -49,10 +49,10 @@ instance_rows <- function() {
 }
 
 #' Per-round gains of each mechanism and arm, one row per round.
-deviation_rounds <- function(res, point) {
+deviation_rounds <- function(res, point, theta) {
   rd <- res$round[res$round$point == point & res$round$cert, ]
   keys <- c("graph_type", "prior", "seed", "t")
-  ap <- if (NROW(res$armp)) res$armp[res$armp$point == point & res$armp$theta == 0.5, ] else NULL
+  ap <- if (NROW(res$armp)) res$armp[res$armp$point == point & res$armp$theta == theta, ] else NULL
   sum_p <- function(m) {
     x <- if (is.null(ap)) NULL else ap[ap$mech == m, ]
     s <- if (NROW(x)) x %>% group_by(across(all_of(keys))) %>%
@@ -137,8 +137,9 @@ separation_rows <- function(ledger) {
   })
 }
 
-#' Write the four table bodies and the numbers file for one operating point.
-write_tables <- function(res, out_dir, point = "load", d = study_defaults()) {
+#' Write the four table bodies and the numbers file for one operating point,
+#' with the constants the run recorded.
+write_tables <- function(res, out_dir, point = "load", d = study_config(res$config)) {
   tdir <- file.path(out_dir, "tables")
   dir.create(tdir, recursive = TRUE, showWarnings = FALSE)
   inst_name <- c(tree = "T", sp = "S", entangled = "X")
@@ -155,7 +156,7 @@ write_tables <- function(res, out_dir, point = "load", d = study_defaults()) {
     file.path(tdir, "eval-instances.tex"))
 
   # Deviations.
-  dr <- deviation_rounds(res, point)
+  dr <- deviation_rounds(res, point, d$thetas[1])
   ds <- deviation_seeds(dr)
   cells <- ds %>% distinct(graph_type, prior, mech, arm) %>%
     mutate(mech = factor(mech, names(mech_label)), arm = factor(arm, c("P", "G"))) %>%
@@ -213,6 +214,8 @@ evaluation_numbers <- function(res, point, d, ds) {
                                       value = as.character(value), source = source)
   rd <- res$round[res$round$point == point, ]
   rc <- rd[rd$cert, ]
+  th1 <- format(d$thetas[1], digits = 10)
+  thn <- format(max(d$thetas), digits = 10)
   add("leaves carrying prior U(0,1) in profile (b)", "", paste(d$prior_b_uniform_leaves, collapse = " and "), "study_defaults")
   add("rounds per seed", "", d$rounds, "study_defaults")
   add("seeds", "", length(d$seeds), "study_defaults")
@@ -230,18 +233,18 @@ evaluation_numbers <- function(res, point, d, ds) {
     r <- rc[rc$graph_type == g & rc$prior == p, ]
     for (m in c("vcg", "myerson")) {
       cc <- if (is.null(cs)) NULL else cs[cs$graph_type == g & cs$prior == p & cs$mech == m, ]
-      c05 <- if (NROW(cc)) cc[cc$theta == 0.5, ] else NULL
+      c05 <- if (NROW(cc)) cc[cc$theta == d$thetas[1], ] else NULL
       c1  <- if (NROW(cc)) cc[cc$theta == max(d$thetas), ] else NULL
       br  <- if (m == "vcg") "branch (W)" else "branch (V)"
       add("share of rounds with a realising triple", paste(grp, m, br),
           fmt(mean(r[[paste0("realised_", m)]] > 0)), "contested_triple via arm_p_round")
-      add("c at theta = 1/2 (selection form)", paste(grp, m),
+      add(sprintf("c at theta = %s (selection form)", th1), paste(grp, m),
           if (NROW(c05)) fmt(c05$c) else "0", "c_selection")
-      add("c at theta = 1 - 1e-9 (attained)", paste(grp, m),
+      add(sprintf("c at theta = %s (attained)", thn), paste(grp, m),
           if (NROW(c1)) fmt(c1$c) else "0", "c_selection")
       add("c, theta -> 1 supremum", paste(grp, m),
           if (NROW(c05)) fmt(c05$c_sup) else "0", "c_selection")
-      add("P(E) and E[h | E] at theta = 1/2", paste(grp, m),
+      add(sprintf("P(E) and E[h | E] at theta = %s", th1), paste(grp, m),
           if (NROW(c05)) sprintf("%s; %s", fmt(c05$p_event), fmt(c05$h_given_event)) else "0; ---",
           "c_selection")
       s <- ds[ds$graph_type == g & ds$prior == p & ds$mech == m & ds$arm == "P", ]
@@ -254,7 +257,7 @@ evaluation_numbers <- function(res, point, d, ds) {
   }
   # One-agent gains per round: the selection's increment, with seed intervals.
   if (NROW(res$armp)) {
-    one <- res$armp[res$armp$point == point & res$armp$theta == 0.5, ] %>%
+    one <- res$armp[res$armp$point == point & res$armp$theta == d$thetas[1], ] %>%
       group_by(graph_type, prior, mech, seed, t) %>% summarise(h = max(dp), .groups = "drop")
     for (g in unique(rc$graph_type)) for (p in unique(rc$prior)) for (m in c("vcg", "myerson", "fp")) {
       r <- rc[rc$graph_type == g & rc$prior == p, c("graph_type", "prior", "seed", "t")]

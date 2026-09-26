@@ -13,9 +13,12 @@
 #' @param prior "a" or "b".
 #' @param d     The constants, `study_defaults()` unless a test hands others.
 run_round <- function(pt, prior, seed, t, d) {
-  env   <- exp7_environment(pt$graph_type, d$load_level, pt$N, NA, "node",
+  # The constructor's load level sets only the companion's own task-arrival
+  # rate, which the study's generator does not use.
+  env   <- exp7_environment(pt$graph_type, "high", pt$N, NA, "node",
                             pt$cap_scale)
-  tasks <- study_round_tasks(env, pt$N, t, seed, prior, d$deadlines)
+  tasks <- study_round_tasks(env, pt$N, t, seed, prior, d$deadlines,
+                             d$prior_b_uniform_leaves)
   cert  <- dsic_certificate(env, tasks)
   env$dsic_status <- if (cert) "certified" else "uncertified"
   b     <- study_bids(tasks, env, d)
@@ -27,7 +30,7 @@ run_round <- function(pt, prior, seed, t, d) {
   if (!cert) return(list(round = round))
 
   k     <- study_bid_scale(env, d)
-  pr    <- study_prior_table(tasks$recipe, prior, k)
+  pr    <- study_prior_table(tasks$recipe, prior, k, d$prior_b_uniform_leaves)
   model <- market_model(tasks, env)
   mechs <- list(vcg = mechanism("vcg"), myerson = mechanism("myerson", pr),
                 fp = mechanism("fp"))
@@ -49,7 +52,7 @@ run_round <- function(pt, prior, seed, t, d) {
   ap_raw <- list(
     vcg     = arm_p_round(b, mechs$vcg, model, pr, d$thetas),
     myerson = arm_p_round(b, mechs$myerson, model, pr, d$thetas),
-    fp      = arm_p_round(b, mechs$fp, model, pr, 0.5, triples_from = mechs$vcg))
+    fp      = arm_p_round(b, mechs$fp, model, pr, d$thetas[1], triples_from = mechs$vcg))
   armp <- bind_rows(lapply(names(ap_raw), function(m) {
     x <- ap_raw[[m]]
     if (!"dp" %in% names(x)) return(NULL)
@@ -59,7 +62,7 @@ run_round <- function(pt, prior, seed, t, d) {
 
   # Arm G under each mechanism.
   g_raw <- lapply(names(mechs), function(m)
-    arm_g_round(b, mechs[[m]], model, pr, prior, k))
+    arm_g_round(b, mechs[[m]], model, pr, prior, k, d$prior_b_uniform_leaves))
   names(g_raw) <- names(mechs)
   armg <- bind_rows(lapply(names(g_raw), function(m) mutate(g_raw[[m]], mech = m)))
 
@@ -75,7 +78,8 @@ run_round <- function(pt, prior, seed, t, d) {
   aug_tasks <- bind_rows(tasks, ph)
   ref_aug <- vcg_allocate(aug_tasks, env, d$util_hat, blb, init_success_model(),
                           lambda_l_default = d$lambda_l)
-  aug <- augment(model, pr, gb$leaf, study_prior_table(L[gb$leaf], prior, k))
+  aug <- augment(model, pr, gb$leaf,
+                 study_prior_table(L[gb$leaf], prior, k, d$prior_b_uniform_leaves))
   run_aug <- mech_run(mechs$vcg, c(b, gb$bid_ph), aug$model)
   ref_aug_p <- numeric(nrow(aug_tasks))
   ref_aug_p[match(ref_aug$task_id, aug_tasks$task_id)] <- ref_aug$vcg_payment
@@ -85,7 +89,7 @@ run_round <- function(pt, prior, seed, t, d) {
 
   # Clinching: transcript mutations, the verifiers, and the two arms there.
   rz  <- if (NROW(armp) && "mech" %in% names(armp))
-    armp[armp$mech == "vcg" & armp$theta == 0.5, ] else NULL
+    armp[armp$mech == "vcg" & armp$theta == d$thetas[1], ] else NULL
   sel <- if (!is.null(rz) && nrow(rz)) rz[which.max(rz$dp), ] else NULL
   muts <- clinch_mutations(b, model,
                            phantom = list(type = gb$leaf, exit = gb$bid_ph),
@@ -121,8 +125,7 @@ run_round <- function(pt, prior, seed, t, d) {
     rejected = c(verify$rejected_any[verify$mutation == "forged"],
                  verify$rejected_any[verify$mutation == "phantom"]))
 
-  led <- ledger_round(b, model, pr, prior, k, d$fee, d$stake,
-                      ap = ap_raw$vcg, g = g_raw$vcg)
+  led <- ledger_round(b, model, pr, prior, k, d, ap = ap_raw$vcg, g = g_raw$vcg)
 
   agent <- NULL
   if (t == 1L) {
@@ -185,15 +188,30 @@ run_block <- function(pt, prior, seed, d) {
 config_rows <- function(d, p1_commit) {
   pts <- d$points
   tibble(key = c("rounds", "seeds", "util_hat", "deadlines", "lambda_l",
-                 "load_level", "priors", "prior_b_uniform_leaves", "thetas",
+                 "priors", "prior_b_uniform_leaves", "thetas",
                  "fee", "stake", "points", "p1_commit"),
          value = c(d$rounds, paste(d$seeds, collapse = " "), d$util_hat,
-                   paste(d$deadlines, collapse = " "), format(d$lambda_l, digits = 15),
-                   d$load_level, paste(d$priors, collapse = " "),
+                   paste(d$deadlines, collapse = " "), format(d$lambda_l, digits = 17),
+                   paste(d$priors, collapse = " "),
                    paste(d$prior_b_uniform_leaves, collapse = " "),
-                   paste(format(d$thetas, digits = 15), collapse = " "), d$fee, d$stake,
+                   paste(format(d$thetas, digits = 17), collapse = " "), d$fee, d$stake,
                    paste(pts$point, pts$graph_type, pts$N, pts$cap_scale, sep = ":",
                          collapse = " "), p1_commit))
+}
+
+#' The constants of a run read back from its recorded rows.
+study_config <- function(cfg) {
+  v  <- setNames(cfg$value, cfg$key)
+  sp <- function(k) strsplit(v[[k]], " ", fixed = TRUE)[[1]]
+  pts <- do.call(rbind, strsplit(sp("points"), ":", fixed = TRUE))
+  list(rounds = as.integer(v[["rounds"]]), seeds = as.integer(sp("seeds")),
+       util_hat = as.numeric(v[["util_hat"]]), deadlines = as.integer(sp("deadlines")),
+       lambda_l = as.numeric(v[["lambda_l"]]), priors = sp("priors"),
+       prior_b_uniform_leaves = sp("prior_b_uniform_leaves"),
+       thetas = as.numeric(sp("thetas")), fee = as.numeric(v[["fee"]]),
+       stake = as.numeric(v[["stake"]]),
+       points = tibble(point = pts[, 1], graph_type = pts[, 2],
+                       N = as.integer(pts[, 3]), cap_scale = as.numeric(pts[, 4])))
 }
 
 #' Run every block and write the raw tables.

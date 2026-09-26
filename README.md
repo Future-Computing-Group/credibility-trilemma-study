@@ -50,7 +50,7 @@ The pin test is skipped until the tag exists; from then on it requires the submo
 
 ## Operating points and wall time
 
-Thirty rounds per seed and ten seeds, the platform's joint-misreport block. Two points per instance: `population`, the platform's agent counts (90 on the tree, 45 on the fan), and `load`, the platform's offered load at its high load level (1.5 tasks per agent, so 135 and 68 single-task agents), which also carries the crossing instance at the platform's enumerable point (12 agents, a tenth of the capacity) as a boundary row. The platform's contention sweep is not run.
+Thirty rounds per seed and ten seeds, the platform's joint-misreport block. Two points per instance: `population`, the platform's agent counts (90 on the tree, 45 on the fan), and `load`, the platform's offered load at its high load level (1.5 tasks per agent, so 135 and 68 single-task agents), which also carries the crossing instance at the platform's enumerable point (12 agents, a tenth of the capacity) as a boundary row. The platform's load level itself is not a study constant: in the platform's environment constructor it sets only the task-arrival rate of the platform's own generator, which the study does not call, and a test checks that environments built at two levels differ in nothing else. The platform's contention sweep is not run.
 
 Measured on a 10-core laptop: `make test-study` about 50 s; `make compute` 1436 s (24 min) for 90 blocks on 9 workers; `make tables` about 2 s. The platform's own suite (`make test-p1`) runs about twenty minutes, as its README states.
 
