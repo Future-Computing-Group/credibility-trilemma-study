@@ -65,3 +65,22 @@ test_that("static: no verifier reads the operator's surplus", {
   s <- readLines(file.path(study_root_dir, "R", "verify.R"))
   expect_false(any(grepl("surplus\\s*>", s)))
 })
+
+test_that("a mutation's extraction and welfare loss are read off its own transcript", {
+  # A phantom exiting at the support top of a saturated leaf takes a unit a
+  # genuine winner held, so the mutated transcript's allocation differs from
+  # the honest one and from the sealed-bid VCG best phantom, which displaces
+  # no one.
+  f <- verify_fixture("T", "a", 1L)
+  b <- f$r$b
+  honest <- f$muts$honest$tr
+  lv <- f$r$model$type[which(honest$x > 0)[1]]
+  mu <- clinch_mutations(b, f$r$model, phantom = list(type = lv, exit = f$r$k))$phantom
+  tr <- mu$tr
+  expect_false(identical(tr$x, honest$x))
+  stay <- tr$x > 0
+  expect_equal(mu$conc_w_num, sum(b * honest$x) - sum(b * tr$x))
+  expect_gt(mu$conc_w_num, 0)
+  expect_equal(mu$extraction, sum(tr$pay[stay] - honest$pay[stay]))
+  expect_identical(f$muts$honest$conc_w_num, 0)
+})

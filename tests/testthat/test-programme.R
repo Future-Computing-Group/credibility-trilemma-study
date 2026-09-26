@@ -92,3 +92,24 @@ test_that("the table writers emit the four bodies with no placeholder left", {
   cfg <- read.csv(file.path(out, "config.csv"))
   expect_identical(cfg$value[cfg$key == "rounds"], "2")
 })
+
+test_that("the clinching rows read the clinching transcript, not the VCG rows", {
+  key <- tibble(point = "p", graph_type = "tree", prior = "a", seed = 1L, t = 1L)
+  round <- mutate(key, cert = TRUE, W_vcg = 10, W_myerson = 8, W_fp = 10)
+  armg <- bind_rows(lapply(c("vcg", "myerson", "fp"), function(m)
+    mutate(key, mech = m, class = "nonwin", rev_gain = 0.2, extraction = 0.2,
+           conc_w_num = 0, rationalised = TRUE)))
+  clinch_dev <- bind_rows(
+    mutate(key, arm = "P", realised = TRUE, gain = 0.3, extraction = 0.25,
+           conc_w_num = 0.5, rejected = TRUE),
+    mutate(key, arm = "G", realised = TRUE, gain = 0.4, extraction = 0.1,
+           conc_w_num = 1.5, rejected = TRUE))
+  res <- list(round = round, armp = NULL, armg = armg, clinch_dev = clinch_dev)
+  dr <- deviation_rounds(res, "p")
+  cl <- dr[dr$mech == "clinching", ]
+  expect_equal(cl$gain[cl$arm == "G"], 0.4)
+  expect_equal(cl$extraction[cl$arm == "G"], 0.1)
+  expect_equal(cl$conc_w_num[cl$arm == "G"], 1.5)
+  expect_equal(cl$extraction[cl$arm == "P"], 0.25)
+  expect_equal(cl$conc_w_num[cl$arm == "P"], 0.5)
+})
