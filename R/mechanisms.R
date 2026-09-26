@@ -176,8 +176,8 @@ active_intervals <- function(msgs) {
 #' g(S) = min over T containing S of f(T) - c(T), and s_i(p) = g(D) - g(D - i).
 #'
 #' The operator's announcements pass through `hooks` (identity by default):
-#' `A(e, A)`, the announced set at event e; `f(e, v)`, the announced ranks
-#' f(A - i) of the candidates (named by id); `s(e, v)`, the announced residual
+#' `A(e, A)`, the announced set at event e; `f(e, v, fA)`, the announced
+#' ranks f(A - i) of the candidates (named by id); `s(e, v)`, the announced residual
 #' supplies; `price(e, v, clinch)`, the price delivered to each roster member.
 #'
 #' @param b      Genuine agents' bids, which are their exit prices.
@@ -216,7 +216,7 @@ clinch_run <- function(b, model, msgs = honest_messages(b, model),
         c2[t] <- c2[t] - 1L
         model$f(c2)
       }, numeric(1))
-      fAi   <- hk("f", e, setNames(fm[types[cands]], cands))
+      fAi   <- hk("f", e, setNames(fm[types[cands]], cands), fA)
       s     <- hk("s", e, fA - fAi)
       clinch <- cands[s >= 1 - 1e-9]
       price_to <- hk("price", e, setNames(rep(p, length(roster)), roster), clinch)
