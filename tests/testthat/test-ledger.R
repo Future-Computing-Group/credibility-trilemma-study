@@ -82,7 +82,7 @@ test_that("the separation table counts only rounds where (C3) holds", {
                                        realised = TRUE, delta = delta, rejected = NA, c3 = c3)
   lg <- bind_rows(row(1L, TRUE, -0.01), row(2L, FALSE, 0.01))
   sr <- separation_rows(lg)
-  x  <- sr[[which(names(case_label) == "5a_phantom_no_displacement")]]
+  x  <- unname(sr[[which(names(case_label) == "5a_phantom_no_displacement")]])
   expect_identical(x[2], "1")
   expect_identical(x[3], fmt(-0.01 * 1e3))
 })

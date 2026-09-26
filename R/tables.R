@@ -120,6 +120,23 @@ mutation_label <- c(price = "Price equivocation", active = "Misreported $D(p)$",
 mutation_case <- c(price = "1", active = "2", s = "3", rank = "4", phantom = "5",
                    forged = "5")
 
+#' Separation table rows: per proof case, the rounds it is realised in and its
+#' largest payoff change per condition set, over the rounds where (C3) holds,
+#' the proposition's hypothesis.
+separation_rows <- function(ledger) {
+  lg <- ledger[ledger$realised & ledger$c3, ]
+  lapply(names(case_label), function(cs) {
+    x <- lg[lg$case == cs, ]
+    n <- length(unique(paste(x$graph_type, x$prior, x$seed, x$t)))
+    vals <- vapply(names(ledger_conditions()), function(cn) {
+      y <- x[x$conditions == cn, ]
+      if (!nrow(y)) "---" else if (cs == "3_capacity")
+        sprintf("rejected, %d of %d", sum(y$rejected), nrow(y)) else fmt(max(y$delta) * 1e3)
+    }, character(1))
+    c(case_label[[cs]], as.character(n), vals)
+  })
+}
+
 #' Write the four table bodies and the numbers file for one operating point.
 write_tables <- function(res, out_dir, point = "load", d = study_defaults()) {
   tdir <- file.path(out_dir, "tables")
@@ -177,18 +194,8 @@ write_tables <- function(res, out_dir, point = "load", d = study_defaults()) {
                                 "Revenue ($10^{-3}$)"), brow),
              file.path(tdir, "eval-broadcast.tex"))
 
-  # Separation.
-  lg <- res$ledger[res$ledger$point == point & res$ledger$realised, ]
-  srow <- lapply(names(case_label), function(cs) {
-    x <- lg[lg$case == cs, ]
-    n <- length(unique(paste(x$graph_type, x$prior, x$seed, x$t)))
-    vals <- vapply(names(ledger_conditions()), function(cn) {
-      y <- x[x$conditions == cn, ]
-      if (!nrow(y)) "---" else if (cs == "3_capacity")
-        sprintf("rejected, %d of %d", sum(y$rejected), nrow(y)) else fmt(max(y$delta) * 1e3)
-    }, character(1))
-    c(case_label[[cs]], as.character(n), vals)
-  })
+  # Separation, over the rounds where (C3) holds.
+  srow <- separation_rows(res$ledger[res$ledger$point == point, ])
   writeLines(tabular("lrrrrrr", c("Proof case (largest payoff change, $10^{-3}$)", "Rounds",
                                    "All in force", "No (C0)",
                                    sprintf("No (C1), $\\lambda=%s$", d$stake), "No (C2)", "No (C4)"),
@@ -287,6 +294,8 @@ evaluation_numbers <- function(res, point, d, ds) {
   add("share of rounds the phantom is accepted with the roster clause removed", "",
       fmt(mean(!v$rejected_any[v$mutation == "phantom_roster_off"])), "verify_transcript")
   add("share of rounds with binding capacity, (C3)", "", fmt(mean(rc$c3)), "ledger_round")
+  add("rounds with binding capacity, (C3), of certified rounds", "",
+      sprintf("%d of %d", sum(rc$c3), nrow(rc)), "ledger_round")
   lg <- res$ledger[res$ledger$point == point & res$ledger$realised, ]
   ke <- lg[lg$case == "4_perturbation" & lg$conditions == "no_C1", ]
   add("knife-edge: max |gain - lambda dp|", "", if (nrow(ke)) fmt(max(abs(ke$delta - d$stake * ke$dp))) else "---",

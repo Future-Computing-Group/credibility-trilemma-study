@@ -67,6 +67,17 @@ counts_of <- function(model, idx) tabulate(model$type[idx], model$n_types)
 #' Rank of a set of agents.
 set_rank <- function(model, idx) model$f(counts_of(model, idx))
 
+#' f(E): the rank of the region over its whole ground set, identities that did
+#' not bid in the round included.
+#'
+#' On the market every leaf may carry any number of identities, so f(E) is the
+#' rank with every leaf's count at least the region's total capacity: the
+#' region's full capacity f(L). On a toy model the ground set is its agents.
+ground_rank <- function(model) {
+  if (is.null(model$env)) return(set_rank(model, seq_along(model$type)))
+  model$f(rep(ceiling(sum(node_token_capacity(model$env))), model$n_types))
+}
+
 #' Rank of a set of tasks on the environment's region.
 task_rank <- function(tasks, env) {
   rank_oracle(env)(tabulate(match(tasks$recipe, rownames(env$anc)), nrow(env$anc)))

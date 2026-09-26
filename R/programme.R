@@ -134,9 +134,9 @@ run_round <- function(pt, prior, seed, t, d) {
                                      n_members = NA_integer_))
   }
 
-  rank_E <- set_rank(model, seq_along(b))
   round <- mutate(round,
-    n_active = sum(b > 0), rank_E = rank_E, c3 = led$c3[1],
+    n_active = sum(b > 0), rank_agents = set_rank(model, seq_along(b)),
+    f_E = ground_rank(model), c3 = led$c3[1],
     zero_gap_share = task_pair_zero_gap_share(model),
     vcg_eq_p1 = vcg_eq_p1, clinch_eq_vcg = clinch_eq_vcg, vcg_aug_eq_p1 = vcg_aug_eq_p1,
     clinch_mut_eq_vcg = clinch_mut_eq_vcg,

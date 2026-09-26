@@ -38,7 +38,8 @@ operator_payoff <- function(units_gen, gross_gen, units_ph, gross_ph, cond,
 #' against the region; case 4 is Arm P's best single perturbation and the
 #' best non-winning phantom; cases 5a and 5b are the best winning phantom that
 #' displaces no genuine winner and the best that displaces one. (C3) is read
-#' off the round: more active agents than the rank, and a full allocation.
+#' off the round against f(E), the region's rank over its whole ground set:
+#' more active agents than f(E), and an allocation that fills it.
 #'
 #' @return Tibble: case, conditions, realised, delta (payoff change), and the
 #'   case's inputs (dp, p_ph, units_ph), rejected, c3.
@@ -48,8 +49,8 @@ ledger_round <- function(b, model, pr, prior, k, fee, stake,
   vcg  <- mechanism("vcg")
   base <- mech_run(vcg, b, model)
   n    <- length(b)
-  rk   <- set_rank(model, seq_len(n))
-  c3   <- sum(b > 0) > rk && sum(base$x) == rk
+  fE   <- ground_rank(model)
+  c3   <- sum(b > 0) > fE && sum(base$x) == fE
   win  <- which(base$x > 0)
   lose <- setdiff(which(b > 0), win)
   g0   <- sum(base$p)
