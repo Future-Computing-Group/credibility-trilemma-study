@@ -13,7 +13,10 @@
 #' task per agent offers two thirds of the companion's task volume; `load`
 #' keeps the companion's offered load instead (its agents carry 1.5 tasks per
 #' round at its high load level, hence 135 and 68 single-task agents), and carries the
-#' crossing instance at the companion's enumerable point as a boundary row.
+#' crossing instance at the companion's enumerable point as a boundary row;
+#' `contention` keeps the load point's agent counts at half the capacity, the
+#' tighter region on which the revenue-optimal mechanism's allocation, thinned
+#' by its reserve, meets competition.
 #' `fee` is the operator's per-unit fee and `stake` the ownership share of the
 #' gross payments used when the no-stake condition is removed, both in bid
 #' units and shares respectively.
@@ -35,7 +38,9 @@ study_defaults <- function() {
       "population", "sp",        45L,  1.0,
       "load",       "tree",      135L, 1.0,
       "load",       "sp",        68L,  1.0,
-      "load",       "entangled", 12L,  0.1
+      "load",       "entangled", 12L,  0.1,
+      "contention", "tree",      135L, 0.5,
+      "contention", "sp",        68L,  0.5
     )
   )
 }
