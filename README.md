@@ -48,4 +48,4 @@ Measured on a 10-core laptop: `make test-study` about 50 s; `make compute` 1436 
 
 ## Licence
 
-MIT; see `LICENSE`. Cite the paper as given in `CITATION.cff`.
+MIT; see `LICENSE`. This is release v1.0.0, archived at Zenodo with version DOI 10.5281/zenodo.22992330. Cite the paper as given in `CITATION.cff`.
