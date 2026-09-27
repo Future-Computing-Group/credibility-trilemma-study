@@ -37,8 +37,8 @@ test_that("the submodule sits at the release tag and its version DOI is publishe
                             paste0(p1_release_tag, ":R/", f)),
                      p1_sourced_blobs[[f]], info = f)
   }
-  status <- suppressWarnings(system2(
-    "curl", c("-s", "-o", "/dev/null", "-L", "-w", "%{http_code}",
-              paste0("https://doi.org/", p1_version_doi)), stdout = TRUE))
-  expect_identical(status, "200")
+  # Base R's libcurl, not the curl binary, which the job's container lacks.
+  status <- attr(curlGetHeaders(paste0("https://doi.org/", p1_version_doi),
+                                redirect = TRUE), "status")
+  expect_identical(status, 200L)
 })
