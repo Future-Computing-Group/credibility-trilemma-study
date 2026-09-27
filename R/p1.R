@@ -3,9 +3,12 @@
 # The study sources five files of the companion's R/ directory from the git
 # submodule `p1/` and adds only its own objects on top. The blobs of those five
 # files are recorded here: every number the study computes is valid for
-# exactly these blobs, and tests/testthat/test-p1-pin.R compares them.
+# exactly these blobs, and tests/testthat/test-p1-pin.R compares them. The pin
+# is recorded in full, commit included, so that a tree without .git (the
+# release archive) is checked against it from the file bytes alone.
 
 p1_release_tag <- "v2.1.0"
+p1_release_commit <- "3606d9baa9b17ac5a9827ba57f8e62ea7ae5aa9d"
 p1_version_doi <- "10.5281/zenodo.22876728"
 
 # The commit development ran against before the release tag existed. Its
@@ -33,8 +36,39 @@ p1_git <- function(root, ...) {
   if (length(out) == 0L) NA_character_ else out[[1]]
 }
 
-#' The commit the release tag names in the submodule, or NA if it is not cut.
+#' TRUE in a git checkout of the submodule (there `p1/.git` is a file).
+p1_has_git <- function(root) file.exists(file.path(root, "p1", ".git"))
+
+#' The git blob id of a file, from its bytes: sha1 of "blob <size>\0" + bytes.
+git_blob_id <- function(path) {
+  bytes <- readBin(path, "raw", file.size(path))
+  digest::digest(c(charToRaw(paste0("blob ", length(bytes))), as.raw(0L), bytes),
+                 algo = "sha1", serialize = FALSE)
+}
+
+#' Blob ids of the five sourced files as they are on disk, named like the pin.
+p1_file_blobs <- function(root) {
+  vapply(names(p1_sourced_blobs),
+         function(f) git_blob_id(file.path(root, "p1", "R", f)), character(1))
+}
+
+#' The companion commit the numbers come from: git's HEAD in a checkout; in a
+#' tree without .git, the recorded release commit, provided the five sourced
+#' files are the recorded blobs.
+p1_head <- function(root) {
+  if (p1_has_git(root)) return(p1_git(root, "rev-parse", "HEAD"))
+  bad <- names(p1_sourced_blobs)[p1_file_blobs(root) != p1_sourced_blobs]
+  if (length(bad) > 0L) {
+    stop("p1/ has no .git and these sourced files differ from the pinned blobs: ",
+         paste(bad, collapse = ", "))
+  }
+  p1_release_commit
+}
+
+#' The commit the release tag names: from git in a checkout (NA if the tag is
+#' not cut), the recorded release commit in a tree without .git.
 p1_tag_commit <- function(root) {
+  if (!p1_has_git(root)) return(p1_release_commit)
   p1_git(root, "rev-parse", "--verify", "--quiet",
          paste0(p1_release_tag, "^{commit}"))
 }

@@ -3,7 +3,7 @@
 # the numbers come from: release-<tag> at the release pin, dev-<commit> before.
 source(file.path("R", "p1.R"))
 study_load(".")
-sha <- p1_git(".", "rev-parse", "HEAD")
+sha <- p1_head(".")
 label <- if (identical(sha, p1_tag_commit("."))) paste0("release-", p1_release_tag) else
   paste0("dev-", substr(sha, 1, 7))
 out <- file.path("results", label)

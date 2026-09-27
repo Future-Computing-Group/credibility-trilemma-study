@@ -19,7 +19,7 @@ The study runs the objects of the paper's credibility analysis on the certified 
 
 ## Requirements
 
-- R (>= 4.1) with `dplyr`, `tibble`, `purrr`, `tidyr`, `readr` and `testthat`.
+- R (>= 4.1) with `dplyr`, `tibble`, `purrr`, `tidyr`, `readr`, `digest`, `withr` and `testthat`.
 - The platform's own suite additionally needs the packages its README lists (`here`, `lpSolve`, `withr`, `digest`, `yaml` among them).
 
 ## Running
@@ -33,6 +33,10 @@ make reproduce   # the three above, in order
 ```
 
 `make compute` runs blocks on `STUDY_WORKERS` forked workers (default: all cores but one); each block is deterministic given its seed, so the result does not depend on the worker count. The output directory is labelled by the platform tree: `results/release-v2.1.0/` at the release pin, `results/dev-<commit>/` otherwise. Numbers under a `dev-` label are development numbers.
+
+### Reproduce from the archive
+
+The archived release is a tarball of this repository at tag v1.0.0 with the platform's tree at its tag v2.1.0 under `p1/`, and no `.git`. Extract it and run the same targets from its top directory: `make reproduce`, or `make test` then `make compute tables`. Without `.git` the platform commit is read from the pin recorded in `R/p1.R`, after the blob ids of the five sourced files are computed from their bytes and found equal to the recorded ones (a mismatch stops the run), so the output again lands in `results/release-v2.1.0/`. `make test-p1` runs the platform's suite in a scratch copy of `p1/`; the tests that need a git checkout (the platform's and this study's hygiene guards, which scan tracked files, and the platform's check of the commit recorded in an emulation export) skip with that reason.
 
 Install the hygiene hook once per clone: `git config core.hooksPath scripts/git-hooks`.
 

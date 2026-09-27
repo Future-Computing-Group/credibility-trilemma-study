@@ -34,8 +34,16 @@ scan_lines <- function(label, lines) {
   hits
 }
 
+# The release archive is a tarball with no .git: there nothing is tracked and
+# there is no history, and the archive was built from a tree this guard passed.
+skip_outside_checkout <- function(root) {
+  skip_if_not(file.exists(file.path(root, ".git")),
+              "not a git checkout: nothing tracked to scan")
+}
+
 test_that("no tracked file carries internal or process text", {
   root  <- study_root_dir
+  skip_outside_checkout(root)
   files <- system2("git", c("-C", shQuote(root), "ls-files"), stdout = TRUE)
   files <- setdiff(files[!grepl(binary_pattern, files)], c(guard_file, "p1"))
   hits  <- unlist(lapply(files, function(f) {
@@ -48,6 +56,7 @@ test_that("no tracked file carries internal or process text", {
 
 test_that("no commit message carries internal text or an attribution trailer", {
   root <- study_root_dir
+  skip_outside_checkout(root)
   msgs <- tryCatch(system2("git", c("-C", shQuote(root), "log", "--format=%B"),
                            stdout = TRUE, stderr = FALSE),
                    warning = function(w) character(0))
