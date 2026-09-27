@@ -8,15 +8,17 @@
 p1_release_tag <- "v2.1.0"
 p1_version_doi <- "10.5281/zenodo.22876728"
 
-# The commit development runs against until the release tag exists.
+# The commit development ran against before the release tag existed. Its
+# sim_nodelevel.R blob (d3e831c) differs from the tag's only in the
+# demand-responsive posted-price tuning helpers, which the study does not call.
 p1_dev_sha <- "ca989fb6d6b55ec6a5265d83853c4097a376bb46"
 
-# Blob ids of the sourced files at that commit, in load order.
+# Blob ids of the sourced files at the release tag, in load order.
 p1_sourced_blobs <- c(
   structure_instances.R = "65d44b143d964c10babc906da66f93cc95e7d0c5",
   sim_helpers.R         = "e33a2be3ccd85097565e04c1a53182c7d0cffb54",
   sim_market.R          = "1f670f0fca5a57eef8a8458672fff954013d6475",
-  sim_nodelevel.R       = "d3e831ca0472afa4b390cf03e356ac38962e2641",
+  sim_nodelevel.R       = "ce5f6e58c6e6bd1f35c263a1b39dba1dec5a0bb4",
   sim_exp7.R            = "7a1182e370ae4dc046417f2cf696b457a9fc46d5"
 )
 

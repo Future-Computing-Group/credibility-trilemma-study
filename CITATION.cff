@@ -55,7 +55,7 @@ references:
     title: "Simulation code for \"Agentic Service Markets Across the Computing Continuum: A Polymatroidal Architecture\""
     version: v2.1.0
     doi: 10.5281/zenodo.22876728
-    notes: "Version DOI of the platform release this study pins as a git submodule; to be published."
+    notes: "Version DOI of the platform release this study pins as a git submodule."
     repository-code: "https://github.com/Future-Computing-Group/agentic-economy-sim"
     authors:
       - family-names: Lovén

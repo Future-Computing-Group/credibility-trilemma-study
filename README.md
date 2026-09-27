@@ -38,15 +38,7 @@ Install the hygiene hook once per clone: `git config core.hooksPath scripts/git-
 
 ## The platform pin
 
-The submodule `p1/` is added from a relative local path and developed against platform commit `ca989fb`, whose five sourced blobs are recorded in `R/p1.R` and compared by `tests/testthat/test-p1-pin.R`. At release the submodule URL is switched to the platform's public remote and pinned to its release tag:
-
-```sh
-git submodule set-url p1 https://github.com/Future-Computing-Group/agentic-economy-sim
-git -C p1 fetch --tags && git -C p1 checkout v2.1.0
-git add .gitmodules p1
-```
-
-The pin test is skipped until the tag exists; from then on it requires the submodule to sit at the tag, the tag's five blobs to equal the recorded ones, and the platform's version DOI (10.5281/zenodo.22876728) to resolve.
+The submodule `p1/` pins the platform's public remote at its release tag `v2.1.0` (commit `3606d9b`, version DOI 10.5281/zenodo.22876728). The five sourced blobs are recorded in `R/p1.R` and compared by `tests/testthat/test-p1-pin.R`, which requires the submodule to sit at the tag, the tag's five blobs to equal the recorded ones, and the version DOI to resolve. Development ran against platform commit `ca989fb`, whose sourced blobs differ from the tag's only in `sim_nodelevel.R`, and there only in the demand-responsive posted-price tuning helpers, which the study does not call.
 
 ## Operating points and wall time
 
